@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Votação Legislativa Online</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root { --favor: #27ae60; --contra: #e74c3c; --abst: #f1c40f; --dark: #2c3e50; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        h2 { text-align: center; color: var(--dark); font-size: 1.4rem; margin-top: 5px; }
+        .box { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+        
+        /* Otimização para Toque no Celular */
+        select, input, button { 
+            padding: 18px; 
+            border-radius: 12px; 
+            border: 2px solid #eee; 
+            font-size: 16px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            appearance: none; /* Remove estilo padrão do Safari */
+            -webkit-appearance: none;
+        }
+        
+        button { 
+            cursor: pointer; 
+            background: #2980b9; 
+            color: white; 
+            border: none; 
+            font-weight: bold; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+
+        /* Painel Admin */
+        .placar { display: flex; justify-content: space-around; background: var(--dark); padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px; text-align: center; }
+        .placar-num { display: block; font-size: 1.8rem; font-weight: bold; }
+        .placar-label { font-size: 0.6rem; text-transform: uppercase; opacity: 0.8; }
+
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+        .nome { font-size: 0.8rem; font-weight: 600; color: #333; flex: 1; padding-right: 8px; line-height: 1.2; }
+        
+        .indicadores { display: flex; gap: 4px; }
+        .status { width: 60px; padding: 8px 0; border-radius: 6px; font-size: 0.6rem; text-align: center; background: #f8f9fa; color: #ccc; font-weight: 8 bold; border: 1px solid #eee; }
+        
+        .v-favor { background: var(--favor) !important; color: white !important; border-color: #219150; }
+        .v-contra { background: var(--contra) !important; color: white !important; border-color: #c0392b; }
+        .v-abstencao { background: var(--abst) !important; color: #333 !important; border-color: #d4ac0d; }
+
+        .hidden { display: none !important; }
+        hr { border: 0; border-top: 2px solid #f0f0f0; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="scr-login">
+        <h2>🗳️ Câmara Municipal</h2>
+        <div class="box">
+            <select id="user-sel">
+                <option value="">Selecione seu nome</option>
+                <option value="Administrador">⚙️ ADMINISTRADOR</option>
+            </select>
+            <input type="password" id="user-pass" placeholder="Senha" pattern="\d*" inputmode="numeric">
+            <button onclick="realizarLogin()">ACESSAR SISTEMA</button>
+        </div>
+    </div>
+
+    <div id="scr-voter" class="hidden">
+        <h2 id="voter-display" style="font-size: 1.1rem; color: #666;"></h2>
+        <div class="box">
+            <button onclick="registrarVoto('favor')" style="background:var(--favor)">A FAVOR</button>
+            <button onclick="registrarVoto('contra')" style="background:var(--contra)">CONTRA</button>
+            <button onclick="registrarVoto('abstencao')" style="background:var(--abst); color:#333">ABSTENÇÃO</button>
+            <hr>
+            <button onclick="sair()" style="background:#95a5a6">SAIR DO SISTEMA</button>
+        </div>
+    </div>
+
+    <div id="scr-admin" class="hidden">
+        <h2>📊 Painel Legislativo</h2>
+        <div class="placar">
+            <div class="placar-item"><span class="placar-label">Favor</span><span id="p-f" class="placar-num">0</span></div>
+            <div class="placar-item"><span class="placar-label">Contra</span><span id="p-c" class="placar-num">0</span></div>
+            <div class="placar-item"><span class="placar-label">Abst.</span><span id="p-a" class="placar-num">0</span></div>
+        </div>
+        <div id="votos-lista"></div>
+        <div class="box" style="margin-top: 20px;">
+            <button onclick="limparVotos()" style="background:#c0392b; padding: 12px;">LIMPAR TUDO</button>
+            <button onclick="sairAdmin()" style="background:var(--dark); padding: 12px;">SAIR E RENUNCIAR</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const config = {
+        apiKey: "AIzaSyB91CuEck7Fal0ItD3H17ynYap34iNTI-g",
+        authDomain: "votacao-bc712.firebaseapp.com",
+        databaseURL: "https://votacao-bc712-default-rtdb.firebaseio.com",
+        projectId: "votacao-bc712",
+        storageBucket: "votacao-bc712.firebasestorage.app",
+        messagingSenderId: "645708138467",
+        appId: "1:645708138467:web:79dabb377489ada8a002d6"
+    };
+
+    // Inicialização segura para Celular
+    if (!firebase.apps.length) {
+        firebase.initializeApp(config);
+    }
+    const database = firebase.database();
+
+    const legisladores = {
+        "Antônio Geraldo Martins (PDT)": "120",
+        "Cleunice Aparecida de Souza (Cidadania)": "230",
+        "Claudete da Luz de Oliveira Farias (MDB)": "150",
+        "Luís Fernando Oliveira de Souza (PDT)": "125",
+        "Luiz Carlos de Oliveira (MDB)": "156",
+        "Jean da Silva (MDB)": "151",
+        "Kristian Costa Andrade (Podemos)": "205",
+        "Pedro William Velho (MDB)": "156",
+        "Rodrigo Barth Pereira (MDB)": "152",
+        "Renildo de Souza (PL)": "224",
+        "Valdecir de Liz (PDT)": "127",
+        "Administrador": "admin2026"
+    };
+
+    let logadoComo = "";
+
+    const select = document.getElementById('user-sel');
+    Object.keys(legisladores).forEach(nome => {
+        if(nome !== "Administrador") {
+            let opt = document.createElement('option');
+            opt.value = nome;
+            opt.textContent = nome;
+            select.appendChild(opt);
+        }
+    });
+
+    function realizarLogin() {
+        const u = select.value;
+        const p = document.getElementById('user-pass').value;
+        if(!u) return alert("Selecione um nome");
+        
+        if(legisladores[u] === p) {
+            logadoComo = u;
+            document.getElementById('scr-login').classList.add('hidden');
+            if(u === "Administrador") {
+                document.getElementById('scr-admin').classList.remove('hidden');
+                monitorarVotos();
+            } else {
+                document.getElementById('scr-voter').classList.remove('hidden');
+                document.getElementById('voter-display').innerText = "Vereador: " + u;
+            }
+        } else { alert("Senha incorreta!"); }
+    }
+
+    function registrarVoto(tipo) {
+        const idSafe = logadoComo.replace(/[^a-zA-Z]/g, "");
+        database.ref('sessao_votos/' + idSafe).set({
+            escolha: tipo
+        }).then(() => {
+            alert("Voto registrado com sucesso!");
+            sair();
+        }).catch(err => alert("Erro de conexão: " + err.message));
+    }
+
+    function monitorarVotos() {
+        database.ref('sessao_votos').on('value', snap => {
+            const data = snap.val() || {};
+            const lista = document.getElementById('votos-lista');
+            lista.innerHTML = "";
+            let f=0, c=0, a=0;
+
+            Object.keys(legisladores).forEach(nome => {
+                if(nome === "Administrador") return;
+                const idSafe = nome.replace(/[^a-zA-Z]/g, "");
+                const esc = (data[idSafe] && data[idSafe].escolha) ? data[idSafe].escolha : "";
+
+                if(esc === 'favor') f++; 
+                if(esc === 'contra') c++; 
+                if(esc === 'abstencao') a++;
+
+                lista.innerHTML += `
+                    <div class="row">
+                        <span class="nome">${nome}</span>
+                        <div class="indicadores">
+                            <div class="status ${esc=='favor'?'v-favor':''}">A FAVOR</div>
+                            <div class="status ${esc=='contra'?'v-contra':''}">CONTRA</div>
+                            <div class="status ${esc=='abstencao'?'v-abstencao':''}">ABST.</div>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('p-f').innerText = f;
+            document.getElementById('p-c').innerText = c;
+            document.getElementById('p-a').innerText = a;
+        });
+    }
+
+    function limparVotos() {
+        if(confirm("Deseja zerar a votação?")) database.ref('sessao_votos').remove();
+    }
+
+    function sairAdmin() {
+        database.ref('sessao_votos').remove().then(() => sair());
+    }
+
+    function sair() { 
+        window.location.href = window.location.href; // Recarregamento forçado
+    }
+</script>
+</body>
+</html>
