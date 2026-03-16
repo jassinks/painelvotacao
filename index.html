@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema de Votação Legislativa</title>
+    <title>Sistema Legislativo Profissional</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --favor: #27ae60; --contra: #e74c3c; --abst: #f1c40f; --dark: #2c3e50; }
+        :root { --favor: #27ae60; --contra: #e74c3c; --abst: #f1c40f; --dark: #2c3e50; --blue: #2980b9; }
         body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: var(--dark); margin-bottom: 20px; }
-        .titulo-projeto { background: #e8f4fd; border-left: 5px solid #2980b9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; color: #2c3e50; font-size: 1.1rem; }
-        .box { display: flex; flex-direction: column; gap: 12px; }
-        select, input, button { padding: 15px; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; width: 100%; box-sizing: border-box; }
-        button { cursor: pointer; background: #2980b9; color: white; border: none; font-weight: bold; }
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .nome { font-size: 13px; font-weight: bold; flex: 1; }
-        .status { width: 70px; padding: 7px 0; border-radius: 5px; font-size: 9px; text-align: center; background: #eee; color: #aaa; font-weight: bold; border: 1px solid #ddd; }
+        .titulo-projeto { background: #e8f4fd; border-left: 5px solid var(--blue); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; color: #2c3e50; }
+        .box { display: flex; flex-direction: column; gap: 10px; }
+        select, input, button { padding: 14px; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; width: 100%; box-sizing: border-box; }
+        button { cursor: pointer; background: var(--blue); color: white; border: none; font-weight: bold; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .nome { font-size: 12px; font-weight: bold; flex: 1; color: #444; }
+        .status { width: 65px; padding: 6px 0; border-radius: 4px; font-size: 8px; text-align: center; background: #eee; color: #aaa; font-weight: bold; border: 1px solid #ddd; }
         .v-favor { background: var(--favor) !important; color: white !important; }
         .v-contra { background: var(--contra) !important; color: white !important; }
         .v-abst { background: var(--abst) !important; color: #333 !important; }
         .hidden { display: none !important; }
         .placar { display: flex; justify-content: space-around; margin-bottom: 15px; background: var(--dark); padding: 12px; border-radius: 8px; color: white; text-align: center; }
-        .label-admin { font-size: 12px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; display: block; }
+        .admin-section { background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 20px; }
+        .label-admin { font-size: 11px; font-weight: bold; color: #7f8c8d; margin-bottom: 4px; display: block; }
     </style>
 </head>
 <body>
@@ -37,41 +38,46 @@
                 <option value="Administrador">⚙️ ADMINISTRADOR</option>
             </select>
             <input type="password" id="user-pass" placeholder="Senha" inputmode="numeric">
-            <button onclick="entrar()">ENTRAR NO SISTEMA</button>
+            <button onclick="entrar()">ENTRAR</button>
         </div>
     </div>
 
     <div id="scr-voter" class="hidden">
-        <div id="proj-voter" class="titulo-projeto">Carregando projeto...</div>
-        <h3 id="v-nome" style="text-align: center; color: #7f8c8d;"></h3>
+        <div id="proj-voter" class="titulo-projeto">Aguardando Projeto...</div>
+        <h3 id="v-nome" style="text-align: center; color: #7f8c8d; font-size: 14px;"></h3>
         <div class="box">
             <button onclick="votar('favor')" style="background:var(--favor)">A FAVOR</button>
             <button onclick="votar('contra')" style="background:var(--contra)">CONTRA</button>
             <button onclick="votar('abst')" style="background:var(--abst); color:#333">ABSTENÇÃO</button>
             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-            <button onclick="location.reload()" style="background:#95a5a6">SAIR / CANCELAR</button>
+            <button onclick="location.reload()" style="background:#95a5a6">SAIR</button>
         </div>
     </div>
 
     <div id="scr-admin" class="hidden">
-        <h2>📊 Painel de Controle</h2>
+        <h2>📊 Gestão da Sessão</h2>
         
-        <div class="box" style="margin-bottom: 25px;">
-            <label class="label-admin">TÍTULO DO PROJETO (EDITÁVEL EM TEMPO REAL):</label>
-            <input type="text" id="input-titulo" placeholder="Digite o nome do projeto aqui..." oninput="atualizarTitulo(this.value)" style="border: 2px solid #2980b9; background: #f7fbff;">
+        <div class="admin-section">
+            <label class="label-admin">IDENTIFICAÇÃO DA SESSÃO:</label>
+            <input type="text" id="input-sessao" placeholder="Ex: 15ª Sessão Ordinária" oninput="saveSessao(this.value)" style="margin-bottom: 10px;">
+            
+            <label class="label-admin">TÍTULO DO PROJETO ATUAL:</label>
+            <input type="text" id="input-titulo" placeholder="Nome do Projeto de Lei" oninput="saveTitulo(this.value)">
         </div>
 
         <div class="placar">
-            <div>Favor <span id="p-f" style="display:block; font-size:20px; font-weight:bold;">0</span></div>
-            <div>Contra <span id="p-c" style="display:block; font-size:20px; font-weight:bold;">0</span></div>
-            <div>Abst. <span id="p-a" style="display:block; font-size:20px; font-weight:bold;">0</span></div>
+            <div>Favor <span id="p-f" style="display:block; font-size:18px;">0</span></div>
+            <div>Contra <span id="p-c" style="display:block; font-size:18px;">0</span></div>
+            <div>Abst. <span id="p-a" style="display:block; font-size:18px;">0</span></div>
         </div>
 
         <div id="v-lista"></div>
 
-        <div class="box" style="margin-top: 25px;">
-            <button onclick="zerarVotos()" style="background:#c0392b">LIMPAR VOTOS (NOVA VOTAÇÃO)</button>
-            <button onclick="sairAdmin()" style="background:var(--dark)">FECHAR PAINEL E SAIR</button>
+        <div class="box" style="margin-top: 20px;">
+            <button onclick="arquivarVotacao()" style="background:var(--favor)">💾 SALVAR VOTAÇÃO NO HISTÓRICO</button>
+            <button onclick="baixarArquivo()" style="background:var(--dark)">📥 BAIXAR BLOCO DE NOTAS (.TXT)</button>
+            <button onclick="zerarVotos()" style="background:#c0392b">🗑️ ZERAR VOTOS ATUAIS</button>
+            <button onclick="location.reload()" style="background:#95a5a6">SAIR</button>
         </div>
     </div>
 </div>
@@ -98,40 +104,39 @@
         "Valdecir de Liz (PDT)": "127", "Administrador": "admin2026"
     };
 
+    let historicoSessao = []; // Armazena os projetos salvos nesta sessão
+
     const sel = document.getElementById('user-sel');
     Object.keys(legs).forEach(n => { if(n !== "Administrador") { let o = document.createElement('option'); o.value = n; o.text = n; sel.appendChild(o); } });
 
     function entrar() {
         const u = sel.value, p = document.getElementById('user-pass').value;
         if(legs[u] === p) {
-            window.user = u; 
+            window.user = u;
             document.getElementById('scr-login').classList.add('hidden');
-            if(u === "Administrador") { 
-                document.getElementById('scr-admin').classList.remove('hidden'); 
-                monitorarAdmin(); 
-            } else { 
-                document.getElementById('scr-voter').classList.remove('hidden'); 
+            if(u === "Administrador") {
+                document.getElementById('scr-admin').classList.remove('hidden');
+                monitorAdmin();
+            } else {
+                document.getElementById('scr-voter').classList.remove('hidden');
                 document.getElementById('v-nome').innerText = u;
-                ouvirTitulo(); 
+                db.ref('config/titulo').on('value', s => { document.getElementById('proj-voter').innerText = s.val() || "Sem Projeto"; });
             }
-        } else alert("Senha incorreta");
+        } else alert("Senha Incorreta");
     }
 
-    // --- FUNÇÕES DO ADMINISTRADOR ---
-    function atualizarTitulo(val) {
-        db.ref('configuracao/titulo').set(val);
-    }
+    // --- ADMIN SYNC ---
+    function saveSessao(v) { db.ref('config/sessao').set(v); }
+    function saveTitulo(v) { db.ref('config/titulo').set(v); }
 
-    function monitorarAdmin() {
-        // Carrega o título atual no input
-        db.ref('configuracao/titulo').on('value', s => {
-            if(s.val()) document.getElementById('input-titulo').value = s.val();
-        });
-
-        // Monitora os votos
+    function monitorAdmin() {
+        db.ref('config/sessao').on('value', s => { if(s.val()) document.getElementById('input-sessao').value = s.val(); });
+        db.ref('config/titulo').on('value', s => { if(s.val()) document.getElementById('input-titulo').value = s.val(); });
+        
         db.ref('votos').on('value', s => {
             const data = s.val() || {}; const lista = document.getElementById('v-lista');
             lista.innerHTML = ""; let f=0, c=0, a=0;
+            window.votosAtuais = data; // Guardar global para o save
             Object.keys(legs).forEach(n => {
                 if(n === "Administrador") return;
                 const v = data[n.replace(/[^a-zA-Z]/g, "")] || "";
@@ -145,22 +150,50 @@
         });
     }
 
-    function zerarVotos() { if(confirm("Deseja zerar todos os votos para uma nova rodada?")) db.ref('votos').remove(); }
-    
-    function sairAdmin() { location.reload(); }
-
-    // --- FUNÇÕES DO VEREADOR ---
-    function ouvirTitulo() {
-        db.ref('configuracao/titulo').on('value', s => {
-            document.getElementById('proj-voter').innerText = s.val() || "Nenhum projeto em votação";
+    // --- SALVAMENTO E RELATÓRIO ---
+    function arquivarVotacao() {
+        const titulo = document.getElementById('input-titulo').value || "Projeto Sem Título";
+        const sessao = document.getElementById('input-sessao').value || "Sessão Não Identificada";
+        
+        let registro = `PROJETO: ${titulo}\nSESSÃO: ${sessao}\nDATA: ${new Date().toLocaleString()}\n`;
+        registro += `------------------------------------------\n`;
+        
+        Object.keys(legs).forEach(n => {
+            if(n === "Administrador") return;
+            const v = (window.votosAtuais && window.votosAtuais[n.replace(/[^a-zA-Z]/g, "")]) || "Ausente";
+            registro += `${n}: ${v.toUpperCase()}\n`;
         });
+        registro += `\n==========================================\n\n`;
+
+        historicoSessao.push(registro);
+        alert("Votação do projeto '" + titulo + "' adicionada ao arquivo temporário!");
+        
+        if(confirm("Deseja ZERAR os votos agora para o próximo projeto?")) {
+            db.ref('votos').remove();
+            db.ref('config/titulo').set("");
+            document.getElementById('input-titulo').value = "";
+        }
     }
+
+    function baixarArquivo() {
+        if(historicoSessao.length === 0) return alert("Não há votações salvas para baixar!");
+        
+        const nomeSessao = document.getElementById('input-sessao').value || "sessao";
+        const textoFinal = historicoSessao.join("");
+        const blob = new Blob([textoFinal], { type: "text/plain" });
+        const link = document.createElement("a");
+        
+        link.download = `Relatorio_${nomeSessao.replace(/\s+/g, '_')}.txt`;
+        link.href = window.URL.createObjectURL(blob);
+        link.click();
+    }
+
+    function zerarVotos() { if(confirm("Limpar votos atuais?")) db.ref('votos').remove(); }
 
     function votar(t) {
         const id = window.user.replace(/[^a-zA-Z]/g, "");
-        db.ref('votos/' + id).set(t).then(() => { 
-            alert("Voto registrado com sucesso!"); 
-        });
+        db.ref('votos/' + id).set(t);
+        alert("Voto Confirmado!");
     }
 </script>
 </body>
