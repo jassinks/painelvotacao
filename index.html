@@ -3,81 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema Legislativo Profissional</title>
+    <title>SISTEMA LEGISLATIVO PROFISSIONAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --favor: #27ae60; --contra: #e74c3c; --abst: #f1c40f; --dark: #2c3e50; --blue: #2980b9; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: var(--dark); margin-bottom: 20px; }
-        .titulo-projeto { background: #e8f4fd; border-left: 5px solid var(--blue); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; color: #2c3e50; }
-        .box { display: flex; flex-direction: column; gap: 10px; }
-        select, input, button { padding: 14px; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; width: 100%; box-sizing: border-box; }
-        button { cursor: pointer; background: var(--blue); color: white; border: none; font-weight: bold; }
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .nome { font-size: 12px; font-weight: bold; flex: 1; color: #444; }
-        .status { width: 65px; padding: 6px 0; border-radius: 4px; font-size: 8px; text-align: center; background: #eee; color: #aaa; font-weight: bold; border: 1px solid #ddd; }
-        .v-favor { background: var(--favor) !important; color: white !important; }
-        .v-contra { background: var(--contra) !important; color: white !important; }
-        .v-abst { background: var(--abst) !important; color: #333 !important; }
+        :root { 
+            --favor: #2ecc71; --contra: #e74c3c; --abst: #f1c40f; 
+            --bg: #000000; --surface: #121212; --text: #ffffff; 
+            --accent: #3498db; --gray: #222;
+        }
+
+        body { font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; overflow-x: hidden; }
+        .container { max-width: 1200px; margin: auto; background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid #333; }
+
+        .admin-header-inputs { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 20px; }
+        input { background: #000; border: 1px solid #333; color: white; padding: 15px; width: 100%; box-sizing: border-box; font-size: 16px; border-radius: 4px; }
+        .label-p { font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; font-weight: 700; }
+
+        .placar-header { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .placar-card { background: #000; padding: 15px; border-radius: 6px; text-align: center; border: 1px solid #222; }
+        .placar-label { font-size: 11px; text-transform: uppercase; color: #555; display: block; margin-bottom: 5px; }
+        .placar-num { font-size: 50px; font-weight: 900; line-height: 1; }
+
+        .vereadores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        @media (max-width: 900px) { .vereadores-grid { grid-template-columns: 1fr; } }
+        
+        .vereador-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 18px; background: #181818; border-radius: 4px; margin-bottom: 8px; border: 1px solid #252525;
+        }
+        .nome-ver { font-size: 16px; font-weight: 700; color: #eee; text-transform: uppercase; }
+        .voto-status { 
+            width: 110px; padding: 10px 0; border-radius: 3px; text-align: center; 
+            font-size: 10px; font-weight: 900; background: #000; color: #333; border: 1px solid #222;
+        }
+        .v-favor { background: var(--favor) !important; color: #000 !important; }
+        .v-contra { background: var(--contra) !important; color: #fff !important; }
+        .v-abst { background: var(--abst) !important; color: #000 !important; }
+
+        #msg-voto { 
+            padding: 40px 20px; border-radius: 8px; text-align: center; 
+            font-size: 28px; font-weight: 900; text-transform: uppercase; margin: 20px 0;
+            display: none; border: 4px solid;
+        }
+
+        .admin-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-full { grid-column: span 2; }
+        button { padding: 18px; cursor: pointer; border: none; font-weight: 700; text-transform: uppercase; border-radius: 4px; font-family: 'Roboto'; }
+        button:disabled { opacity: 0.2; cursor: not-allowed; }
+        .btn-save { background: var(--favor); color: #000; }
+        .btn-single { background: var(--accent); color: #fff; }
+        .btn-clear { background: #333; color: #fff; }
+
+        .sessao-tag { background: #222; color: var(--accent); padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 700; margin-bottom: 10px; display: inline-block; }
+        .titulo-display { font-size: 28px; font-weight: 900; text-align: center; margin: 20px 0; color: #fff; text-transform: uppercase; }
+        
         .hidden { display: none !important; }
-        .placar { display: flex; justify-content: space-around; margin-bottom: 15px; background: var(--dark); padding: 12px; border-radius: 8px; color: white; text-align: center; }
-        .admin-section { background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 20px; }
-        .label-admin { font-size: 11px; font-weight: bold; color: #7f8c8d; margin-bottom: 4px; display: block; }
     </style>
 </head>
 <body>
 <div class="container">
-    
+
     <div id="scr-login">
-        <h2>🗳️ Câmara Municipal</h2>
-        <div class="box">
-            <select id="user-sel">
-                <option value="">Selecione seu nome</option>
-                <option value="Administrador">⚙️ ADMINISTRADOR</option>
-            </select>
-            <input type="password" id="user-pass" placeholder="Senha" inputmode="numeric">
-            <button onclick="entrar()">ENTRAR</button>
-        </div>
+        <h2 style="text-align:center">ACESSO LEGISLATIVO</h2>
+        <select id="user-sel" style="padding:15px; width:100%; background:#1a1a1a; color:white; border:1px solid #333; margin-bottom:10px">
+            <option value="">IDENTIFIQUE-SE</option>
+            <option value="Administrador">ADMINISTRAÇÃO</option>
+        </select>
+        <input type="password" id="user-pass" placeholder="SENHA" inputmode="numeric">
+        <button onclick="entrar()" style="width:100%; background:var(--accent)">ENTRAR</button>
     </div>
 
     <div id="scr-voter" class="hidden">
-        <div id="proj-voter" class="titulo-projeto">Aguardando Projeto...</div>
-        <h3 id="v-nome" style="text-align: center; color: #7f8c8d; font-size: 14px;"></h3>
-        <div class="box">
-            <button onclick="votar('favor')" style="background:var(--favor)">A FAVOR</button>
-            <button onclick="votar('contra')" style="background:var(--contra)">CONTRA</button>
-            <button onclick="votar('abst')" style="background:var(--abst); color:#333">ABSTENÇÃO</button>
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-            <button onclick="location.reload()" style="background:#95a5a6">SAIR</button>
+        <div id="sessao-voter" class="sessao-tag">---</div>
+        <div id="proj-voter" class="titulo-display">AGUARDANDO...</div>
+        <div id="msg-voto"></div>
+        <div id="botoes-voto" class="box" style="display:flex; flex-direction:column; gap:10px">
+            <button onclick="votar('favor')" style="background:var(--favor); height:120px; color:#000; font-size:24px">FAVORÁVEL</button>
+            <button onclick="votar('contra')" style="background:var(--contra); height:120px; font-size:24px">CONTRÁRIO</button>
+            <button onclick="votar('abst')" style="background:var(--abst); color:#000; height:70px; font-size:18px">ABSTENÇÃO</button>
         </div>
+        <button onclick="location.reload()" style="background:#222; width:100%; margin-top:30px; font-size:12px; color:#555">SAIR</button>
     </div>
 
     <div id="scr-admin" class="hidden">
-        <h2>📊 Gestão da Sessão</h2>
-        
-        <div class="admin-section">
-            <label class="label-admin">IDENTIFICAÇÃO DA SESSÃO:</label>
-            <input type="text" id="input-sessao" placeholder="Ex: 15ª Sessão Ordinária" oninput="saveSessao(this.value)" style="margin-bottom: 10px;">
-            
-            <label class="label-admin">TÍTULO DO PROJETO ATUAL:</label>
-            <input type="text" id="input-titulo" placeholder="Nome do Projeto de Lei" oninput="saveTitulo(this.value)">
+        <div class="admin-header-inputs">
+            <div><label class="label-p">SESSÃO</label><input type="text" id="input-sessao" oninput="db.ref('config/sessao').set(this.value)"></div>
+            <div><label class="label-p">PROJETO</label><input type="text" id="input-titulo" oninput="db.ref('config/titulo').set(this.value)"></div>
         </div>
-
-        <div class="placar">
-            <div>Favor <span id="p-f" style="display:block; font-size:18px;">0</span></div>
-            <div>Contra <span id="p-c" style="display:block; font-size:18px;">0</span></div>
-            <div>Abst. <span id="p-a" style="display:block; font-size:18px;">0</span></div>
+        <div class="placar-header">
+            <div class="placar-card"><span class="placar-label">Favor</span><span id="p-f" class="placar-num" style="color:var(--favor)">0</span></div>
+            <div class="placar-card"><span class="placar-label">Contra</span><span id="p-c" class="placar-num" style="color:var(--contra)">0</span></div>
+            <div class="placar-card"><span class="placar-label">Abst.</span><span id="p-a" class="placar-num" style="color:var(--abst)">0</span></div>
+            <div class="placar-card"><span class="placar-label">Ausente</span><span id="p-aus" class="placar-num" style="color:#444">0</span></div>
         </div>
-
-        <div id="v-lista"></div>
-
-        <div class="box" style="margin-top: 20px;">
-            <button onclick="arquivarVotacao()" style="background:var(--favor)">💾 SALVAR VOTAÇÃO NO HISTÓRICO</button>
-            <button onclick="baixarArquivo()" style="background:var(--dark)">📥 BAIXAR BLOCO DE NOTAS (.TXT)</button>
-            <button onclick="zerarVotos()" style="background:#c0392b">🗑️ ZERAR VOTOS ATUAIS</button>
-            <button onclick="location.reload()" style="background:#95a5a6">SAIR</button>
+        <div class="vereadores-grid"><div id="col-1"></div><div id="col-2"></div></div>
+        <div class="admin-actions">
+            <button class="btn-save" onclick="arquivarVotacao(true)">💾 SALVAR NO RELATÓRIO GERAL</button>
+            <button class="btn-single" onclick="arquivarVotacao(false)">📥 BAIXAR SÓ ESTE PROJETO</button>
+            <button class="btn-clear btn-full" onclick="zerarTela()">🗑️ LIMPAR TELA (NOVO PROJETO)</button>
+            <button class="btn-clear btn-full" onclick="baixarRelatorioGeral()" style="background:var(--accent)">📄 BAIXAR RELATÓRIO COMPLETO</button>
         </div>
     </div>
 </div>
@@ -95,23 +121,51 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    const legs = {
-        "Antônio Geraldo Martins (PDT)": "120", "Cleunice Aparecida de Souza (Cidadania)": "230",
-        "Claudete da Luz de Oliveira Farias (MDB)": "150", "Luís Fernando Oliveira de Souza (PDT)": "125",
-        "Luiz Carlos de Oliveira (MDB)": "156", "Jean da Silva (MDB)": "151",
-        "Kristian Costa Andrade (Podemos)": "205", "Pedro William Velho (MDB)": "156",
-        "Rodrigo Barth Pereira (MDB)": "152", "Renildo de Souza (PL)": "224",
-        "Valdecir de Liz (PDT)": "127", "Administrador": "admin2026"
+    const listaNomes = [
+        "Antônio Geraldo Martins (PDT)", "Cleunice Aparecida de Souza (Cidadania)",
+        "Claudete da Luz de Oliveira Farias (MDB) - 150", "Luís Fernando Oliveira de Souza (PDT)",
+        "Luiz Carlos de Oliveira (MDB)", "Jean da Silva (MDB)",
+        "Kristian Costa Andrade (Podemos)", "Pedro William Velho (MDB)",
+        "Rodrigo Barth Pereira (MDB)", "Renildo de Souza (PL)",
+        "Valdecir de Liz (PDT)"
+    ];
+    
+    // SENHAS OFICIAIS ATUALIZADAS
+    const senhas = {
+        "Administrador": "admin2026",
+        "Antônio Geraldo Martins (PDT)": "120",
+        "Cleunice Aparecida de Souza (Cidadania)": "230",
+        "Claudete da Luz de Oliveira Farias (MDB)": "150",
+        "Luís Fernando Oliveira de Souza (PDT)": "125",
+        "Luiz Carlos de Oliveira (MDB)": "156",
+        "Jean da Silva (MDB)": "151",
+        "Kristian Costa Andrade (Podemos)": "205",
+        "Pedro William Velho (MDB)": "156",
+        "Rodrigo Barth Pereira (MDB)": "152",
+        "Renildo de Souza (PL)": "224",
+        "Valdecir de Liz (PDT)": "127"
     };
 
-    let historicoSessao = []; // Armazena os projetos salvos nesta sessão
+    let historicoGeralSessao = [];
+    let tituloProjetoAnterior = "";
 
     const sel = document.getElementById('user-sel');
-    Object.keys(legs).forEach(n => { if(n !== "Administrador") { let o = document.createElement('option'); o.value = n; o.text = n; sel.appendChild(o); } });
+    // Adiciona os vereadores ao select de login
+    Object.keys(senhas).forEach(n => {
+        if(n !== "Administrador") {
+            let o = document.createElement('option');
+            o.value = n;
+            o.text = n;
+            sel.appendChild(o);
+        }
+    });
 
     function entrar() {
-        const u = sel.value, p = document.getElementById('user-pass').value;
-        if(legs[u] === p) {
+        const u = sel.value;
+        const p = document.getElementById('user-pass').value;
+        if (!u) { alert("SELECIONE UM USUÁRIO"); return; }
+        
+        if(senhas[u] === p) {
             window.user = u;
             document.getElementById('scr-login').classList.add('hidden');
             if(u === "Administrador") {
@@ -119,81 +173,93 @@
                 monitorAdmin();
             } else {
                 document.getElementById('scr-voter').classList.remove('hidden');
-                document.getElementById('v-nome').innerText = u;
-                db.ref('config/titulo').on('value', s => { document.getElementById('proj-voter').innerText = s.val() || "Sem Projeto"; });
+                monitorVotante();
             }
-        } else alert("Senha Incorreta");
+        } else {
+            alert("SENHA INCORRETA");
+        }
     }
-
-    // --- ADMIN SYNC ---
-    function saveSessao(v) { db.ref('config/sessao').set(v); }
-    function saveTitulo(v) { db.ref('config/titulo').set(v); }
 
     function monitorAdmin() {
         db.ref('config/sessao').on('value', s => { if(s.val()) document.getElementById('input-sessao').value = s.val(); });
         db.ref('config/titulo').on('value', s => { if(s.val()) document.getElementById('input-titulo').value = s.val(); });
-        
         db.ref('votos').on('value', s => {
-            const data = s.val() || {}; const lista = document.getElementById('v-lista');
-            lista.innerHTML = ""; let f=0, c=0, a=0;
-            window.votosAtuais = data; // Guardar global para o save
-            Object.keys(legs).forEach(n => {
-                if(n === "Administrador") return;
-                const v = data[n.replace(/[^a-zA-Z]/g, "")] || "";
-                if(v==='favor') f++; if(v==='contra') c++; if(v==='abst') a++;
-                lista.innerHTML += `<div class="row"><span class="nome">${n}</span><div class="indicadores">
-                    <div class="status ${v==='favor'?'v-favor':''}">A FAVOR</div>
-                    <div class="status ${v==='contra'?'v-contra':''}">CONTRA</div>
-                    <div class="status ${v==='abst'?'v-abst':''}">ABST.</div></div></div>`;
+            const data = s.val() || {};
+            const col1 = document.getElementById('col-1'), col2 = document.getElementById('col-2');
+            col1.innerHTML = ""; col2.innerHTML = "";
+            let f=0, c=0, a=0, aus=0;
+            window.votosAtuais = data;
+            
+            const nomesVereadores = Object.keys(senhas).filter(k => k !== "Administrador");
+            
+            nomesVereadores.forEach((nome, i) => {
+                const v = data[nome.replace(/[^a-zA-Z]/g, "")] || "";
+                if(v==='favor') f++; else if(v==='contra') c++; else if(v==='abst') a++; else aus++;
+                const html = `<div class="vereador-item"><span class="nome-ver">${nome.split(' (')[0]}</span><div class="voto-status ${v ? 'v-'+v : ''}">${v ? v.toUpperCase() : 'AUSENTE'}</div></div>`;
+                if(i < 6) col1.innerHTML += html; else col2.innerHTML += html;
             });
-            document.getElementById('p-f').innerText = f; document.getElementById('p-c').innerText = c; document.getElementById('p-a').innerText = a;
+            document.getElementById('p-f').innerText = f; document.getElementById('p-c').innerText = c;
+            document.getElementById('p-a').innerText = a; document.getElementById('p-aus').innerText = aus;
         });
     }
 
-    // --- SALVAMENTO E RELATÓRIO ---
-    function arquivarVotacao() {
-        const titulo = document.getElementById('input-titulo').value || "Projeto Sem Título";
-        const sessao = document.getElementById('input-sessao').value || "Sessão Não Identificada";
-        
-        let registro = `PROJETO: ${titulo}\nSESSÃO: ${sessao}\nDATA: ${new Date().toLocaleString()}\n`;
-        registro += `------------------------------------------\n`;
-        
-        Object.keys(legs).forEach(n => {
-            if(n === "Administrador") return;
-            const v = (window.votosAtuais && window.votosAtuais[n.replace(/[^a-zA-Z]/g, "")]) || "Ausente";
-            registro += `${n}: ${v.toUpperCase()}\n`;
+    function monitorVotante() {
+        db.ref('config/sessao').on('value', s => { document.getElementById('sessao-voter').innerText = s.val() || "SESSÃO"; });
+        db.ref('config/titulo').on('value', s => {
+            const t = s.val() || "";
+            document.getElementById('proj-voter').innerText = t || "AGUARDANDO PROJETO";
+            if(t !== tituloProjetoAnterior) {
+                tituloProjetoAnterior = t;
+                document.getElementById('botoes-voto').style.display = 'flex';
+                document.getElementById('msg-voto').style.display = 'none';
+            }
         });
-        registro += `\n==========================================\n\n`;
-
-        historicoSessao.push(registro);
-        alert("Votação do projeto '" + titulo + "' adicionada ao arquivo temporário!");
-        
-        if(confirm("Deseja ZERAR os votos agora para o próximo projeto?")) {
-            db.ref('votos').remove();
-            db.ref('config/titulo').set("");
-            document.getElementById('input-titulo').value = "";
-        }
     }
-
-    function baixarArquivo() {
-        if(historicoSessao.length === 0) return alert("Não há votações salvas para baixar!");
-        
-        const nomeSessao = document.getElementById('input-sessao').value || "sessao";
-        const textoFinal = historicoSessao.join("");
-        const blob = new Blob([textoFinal], { type: "text/plain" });
-        const link = document.createElement("a");
-        
-        link.download = `Relatorio_${nomeSessao.replace(/\s+/g, '_')}.txt`;
-        link.href = window.URL.createObjectURL(blob);
-        link.click();
-    }
-
-    function zerarVotos() { if(confirm("Limpar votos atuais?")) db.ref('votos').remove(); }
 
     function votar(t) {
         const id = window.user.replace(/[^a-zA-Z]/g, "");
         db.ref('votos/' + id).set(t);
-        alert("Voto Confirmado!");
+        const msg = document.getElementById('msg-voto');
+        document.getElementById('botoes-voto').style.display = 'none';
+        msg.style.display = 'block';
+        if(t === 'favor') { msg.innerText = "VOTO: FAVORÁVEL"; msg.style.color = "var(--favor)"; msg.style.borderColor = "var(--favor)"; }
+        else if(t === 'contra') { msg.innerText = "VOTO: CONTRÁRIO"; msg.style.color = "var(--contra)"; msg.style.borderColor = "var(--contra)"; }
+        else { msg.innerText = "VOTO: ABSTENÇÃO"; msg.style.color = "var(--abst)"; msg.style.borderColor = "var(--abst)"; }
+    }
+
+    function arquivarVotacao(acumular) {
+        const t = document.getElementById('input-titulo').value || "SEM TITULO";
+        const s = document.getElementById('input-sessao').value || "SESSAO";
+        let f=0, c=0, a=0, aus=0;
+        let r = `SESSÃO: ${s.toUpperCase()}\nPROJETO: ${t.toUpperCase()}\nDATA: ${new Date().toLocaleString()}\n` + "-".repeat(50) + "\n";
+        
+        const nomesVereadores = Object.keys(senhas).filter(k => k !== "Administrador");
+        nomesVereadores.forEach(n => {
+            const v = (window.votosAtuais && window.votosAtuais[n.replace(/[^a-zA-Z]/g, "")]) || "AUSENTE";
+            r += `${n.padEnd(35)} [ ${v.toUpperCase()} ]\n`;
+            if(v==='favor') f++; else if(v==='contra') c++; else if(v==='abst') a++; else aus++;
+        });
+        r += "-".repeat(50) + `\nTOTAL: FAVOR: ${f} | CONTRA: ${c} | ABST: ${a} | AUSENTE: ${aus}\n` + "=".repeat(50) + "\n\n";
+        if(acumular) { historicoGeralSessao.push(r); alert("SALVO NO RELATÓRIO GERAL!"); }
+        else { downloadArquivo(r, `Votacao_${t.replace(/\s+/g, '_')}.txt`); }
+    }
+
+    function baixarRelatorioGeral() {
+        if(historicoGeralSessao.length === 0) return alert("NENHUM PROJETO SALVO.");
+        downloadArquivo(historicoGeralSessao.join(""), "Relatorio_Sessao_Completo.txt");
+    }
+
+    function downloadArquivo(conteudo, nome) {
+        const blob = new Blob([conteudo], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.download = nome; a.href = window.URL.createObjectURL(blob); a.click();
+    }
+
+    function zerarTela() {
+        if(confirm("LIMPAR VOTOS E PROJETO?")) {
+            db.ref('votos').remove();
+            db.ref('config/titulo').set("");
+        }
     }
 </script>
 </body>
